@@ -389,56 +389,125 @@ def keyPressed(app, event):
 
 def mousePressed(app, event):   # use event.x and event.y
     print("mousepressed")
-    # select ship
-    if app.setup == True:
+    # all mousePressed for homepage
+
+    # canvas.create_rectangle(app.width*(2/7),
+    #                             app.height*(1/4) + app.height*(1/6) + + app.height*(1/20),
+    #                             app.width*(5/7),
+    #                             app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/20),
+    #                             fill = "light gray",
+    #                             outline = "black")
+        
+    #     canvas.create_rectangle(app.width*(2/7),
+    #                             app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + app.height*(1/10),
+    #                             app.width*(5/7),
+    #                             app.height*(1/4) + app.height*(1/6) + app.height*(2/7) + app.height*(1/10),
+    #                             fill = "light gray",
+    #                             outline = "black")
+    
+    if app.homepage == True:
+        # multiplayer button
+        if (event.x >= app.width*(2/7) and 
+            event.x <= app.width*(5/7) and
+            event.y >= app.height*(1/4) + app.height*(1/6) + + app.height*(1/20) and
+            event.y <= app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/20)):
+            app.multiplayer = True
+            app.homepage = False
+            app.setup = True
+
+        # practice button
+        elif (event.x >= app.width*(2/7) and 
+            event.x <= app.width*(5/7) and
+            event.y >= app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + app.height*(1/10) and
+            event.y <= app.height*(1/4) + app.height*(1/6) + app.height*(2/7) + app.height*(1/10)):
+            app.practice = True
+            app.homepage = False
+            app.setup = True
+
+    # all mousePressed for setup page
+    elif app.setup == True:
+        # select ship
         (row, col) = getCell1(app, event.x, event.y)
         app.selection = (row, col)
         print(f"mousepressed row col = {row, col}")
         checkWhichShip(app)
 
-    # check after every press that the ship that just got bombed if all the others are bombed or not --> if all bombed then do smth if not all bombed then dont do anything
-    if app.gameStarted == True:
-        print("mouse pressed game started")
-        (row, col) = getCell2(app, event.x, event.y)
-        if app.turn.boardHits[row][col] < 0:
-            app.selection = (row, col)
-            print(f"coords from select = {app.selection}")
-            print(f"mousepressed row col = {row, col}")
-            if checkHit(app) == True:
-                # checks if all ship parts bombed, if true calls completedShip --> turns the coords to 3
-                shipAllBombed(app)
-            # makes gui pause for 3 seconds before moving to the next players turn
-            elif app.selection != (-1, -1):
-                # drawsHits(app, canvas)
-                # time.sleep(10)
-                if app.turn.id == 1:
-                    app.turn = app. player2
-                elif app.turn.id == 2:
-                    app.turn = app.player1
-
+        # finish setup button 
+        if (event.x >= app.margin*2 + app.cols*app.cellSize and 
+            event.x <= app.margin*2 + app.cellSize*5 + app.cols*app.cellSize and
+            event.y >= app.margin*(5/2) + app.rows*app.cellSize - 50 and
+            event.y <= app.margin*(5/2) + app.rows*app.cellSize):
             
-    print(f"game started? = {app.gameStarted}")
-                
-    # finish setup button
-    if (event.x >= app.margin*2 + app.cols*app.cellSize and 
-        event.x <= app.margin*2 + app.cellSize*5 + app.cols*app.cellSize and
-        event.y >= app.margin*(5/2) + app.rows*app.cellSize - 50 and
-        event.y <= app.margin*(5/2) + app.rows*app.cellSize):
-        print("finishSetup button")
-        print(f"initial = {app.turn.id}")
-        print(app.setup)
-        if app.turn.id == 1 and app.setup == True:
-            app.setup = True
-            app.gameStarted = False
-            app.turn = app.player2
-            initialShips(app)
-        elif app.turn.id == 2 and app.setup == True:
-            app.selection = (-1, -1)
-            app.turn = app.player1
-            app.setup = False
-            app.gameStarted = True
-        print(f"final = {app.turn.id}")
+            # finish setup page for player 1
+            if app.turn.id == 1:
+                app.setup = True
+                app.gameStarted = False
+                app.turn = app.player2
+            # finish setup page for player 2
+            elif app.turn.id == 2:
+                app.selection = (-1, -1)
+                app.turn = app.player1
+                app.setup = False
+                app.gameStarted = True
+            print(f"final = {app.turn.id}")
 
+    # all mousePressed for gameplay
+    elif app.gameStarted == True:
+        print(app.player2.boardHits)
+        if app.multiplayer == True:
+            # checks if a box was selected in the grid and which box
+            (row, col) = getCell2(app, event.x, event.y)
+            if app.turn.boardHits[row][col] < 0:
+                app.selection = (row, col)
+                print(f"coords from select = {app.selection}")
+                print(f"mousepressed row col = {row, col}")
+                
+                # checks if a ship was hit
+                if checkHit(app) == True:
+                    # checks if all ship parts bombed, if true calls completedShip
+                    shipAllBombed(app)
+                
+                # if a move was made, the player will switch
+                elif app.selection != (-1, -1):
+                    if app.turn.id == 1:
+                        app.turn = app.player2
+                    elif app.turn.id == 2:
+                        app.turn = app.player1
+        elif app.practice == True:
+            if app.turn.id == 1:
+                (row, col) = getCell2(app, event.x, event.y)
+                if app.turn.boardHits[row][col] < 0:
+                    app.selection = (row, col)
+                    print(f"coords from select = {app.selection}")
+                    print(f"mousepressed row col = {row, col}")
+                    
+                    # checks if a ship was hit
+                    if checkHit(app) == True:
+                        # checks if all ship parts bombed, if true calls completedShip
+                        shipAllBombed(app)
+                    
+                    # if a move was made, the player will switch
+                    elif app.selection != (-1, -1):
+                        if app.turn.id == 1:
+                            app.turn = app.player2
+                        elif app.turn.id == 2:
+                            app.turn = app.player1
+
+
+# checks which ship was selected (setup page)
+def checkWhichShip(app):
+    # playerShips = None
+    playerShips = app.turn.ships
+    for ship in playerShips:
+        print("newSHIP")
+        coords = ship.getCoordinates()
+        print(f"ship coords{coords}, slected = {app.selection}")
+        if app.selection in coords:
+            app.selectedShip = ship
+            break
+    return None
+        
+# checks if a ship was hit and for which player (gameplay)
 def checkHit(app):
     print("check Hit")
     print(f"app.sele = {app.selection}")
@@ -461,20 +530,8 @@ def checkHit(app):
                 else:
                     app.turn.boardHits[row][col] = 1
                     return False
-        
-def checkWhichShip(app):
-    # playerShips = None
-    playerShips = app.turn.ships
-    for ship in playerShips:
-        print("newSHIP")
-        coords = ship.getCoordinates()
-        print(f"ship coords{coords}, slected = {app.selection}")
-        if app.selection in coords:
-            app.selectedShip = ship
-            break
-    return None
 
-# checks if all parts of ship are bombed   
+# checks if all parts of ship are bombed (gameplay)
 def shipAllBombed(app):
     if app.turn.id == 1:
         playerShips = app.player2.ships
@@ -503,7 +560,7 @@ def shipAllBombed(app):
                 completedShip(app, coords)
                 return True
 
-# turns coords of ship to fully hit ship
+# turns coords of ship to fully hit ship (gameplay)
 def completedShip(app, coords):
     for i in coords:
         row, col = i
@@ -521,7 +578,10 @@ def gameDimensions():
     return (rows, cols, cellSize, margin) 
 
 def appStarted(app):            # initialize the model (app.xyz)
-    app.setup = True
+    app.homepage = True
+    app.multiplayer = False
+    app.practice = False
+    app.setup = False
     app.gameStarted = False
     (app.rows, app.cols, app.cellSize, app.margin) = gameDimensions()
     
@@ -564,18 +624,34 @@ def appStarted(app):            # initialize the model (app.xyz)
     app.player1 = player(app, 1, app.rows, app.cols, app.emptyColor, app.allShips)
     app.player2 = player(app, 2, app.rows, app.cols, app.emptyColor, app.allShips)
     app.turn = app.player1
-    
-    initialShips(app)
+    initialShips(app, 1)
+    app.turn = app.player2
+    initialShips(app, 2)
+    app.turn = app.player1
 
-def initialShips(app):
-    if app.setup == True and app.turn.id == 1:
+    print(f"player1 ships{app.player1.ships}")
+    print(f"player2 ships{app.player2.ships}")
+
+# creates all ships on the player's board depending on the player (both players will have different randomized boards)
+def initialShips(app, player):
+    if player == 1:
         for key in app.allShips:
             createShips(app, app.allShips[key], key, app.player1.ships)
-    elif app.setup == True and app.turn.id == 2:
+    elif player == 2:
         for key in app.allShips:
             createShips(app, app.allShips[key], key, app.player2.ships)
 
+    # if app.setup == True and app.turn.id == 1:
+    #     for key in app.allShips:
+    #         createShips(app, app.allShips[key], key, app.player1.ships)
+    # elif app.setup == True and app.turn.id == 2:
+    #     for key in app.allShips:
+    #         createShips(app, app.allShips[key], key, app.player2.ships)
+
+# randomizes the ship on the specifc player's board
 def createShips(app, numberOfShips, shipType, playerShip):
+    print(playerShip)
+    print(shipType)
     type = app.shipTypes[shipType]
     row = len(type)
     col = len(type[0])
@@ -665,9 +741,8 @@ def createShips(app, numberOfShips, shipType, playerShip):
         if count >= numberOfShips:
             break
 
-# gets outline coords of ship
+# gets outline coords of ship when given the coordinates of the ship
 def getOutline(app, shipCoord):
-    print(f"get outline ship coord = {shipCoord}")
     directions = [(-1, -1), (0, -1), (1, -1), 
                     (-1, 0), (1, 0), 
                     (-1, 1), (0, 1), (1, 1)]
@@ -697,34 +772,11 @@ def getOutline(app, shipCoord):
                     outline.append((newRow, newCol)) 
     return outline
 
-# draws all ships
-def drawShips(app, canvas):
-    if app.setup == True:
-
-        for ship in app.turn.ships:
-                coords = ship.getCoordinates()
-                for coord in coords:
-                    row, col = coord
-                    drawCell1(app, canvas, row, col, "grey")
-        
-        for row in range(len(app.turn.boardShips)):
-            for col in range(len(app.turn.boardShips[0])):
-                if app.turn.boardShips[row][col] == 0:
-                    drawCell1(app, canvas, row, col, "red")
-                
-    
-    elif app.gameStarted == True:
-        for ship in app.turn.ships:
-            coords = ship.getCoordinates()
-            for coord in coords:
-                row, col = coord
-                drawCell1(app, canvas, row, col, "grey")
-
 # checks if entire ship is legal      
 def isShipLegal(app, shipCoord, outline):
     # checks if ship coords are legal
     for coordS in shipCoord:
-        print("ship false")
+        # print("ship false")
         rowS, colS = coordS
         if rowS < 0:
             print("f1")
@@ -739,7 +791,7 @@ def isShipLegal(app, shipCoord, outline):
             print("f4")
             return False
         if app.turn.boardShips[rowS][colS] >= 0:
-            print("f5")
+            # print("f5")
             return False
 
     # checks if outline coords are legal
@@ -760,47 +812,32 @@ def isShipLegal(app, shipCoord, outline):
 
     return True
 
-def drawsHits(app, canvas):
-    board = app.turn.boardHits
-    for row in range(len(board)):
-        for col in range(len(board[0])):
-            if board[row][col] == 1:
-                drawCircle2(app, canvas, row, col, "light gray")
-            if board[row][col] == 2:
-                drawCircle2(app, canvas, row, col, "red")
-            if board[row][col] == 3:
-                drawCell2(app, canvas, row, col, "black")
-
-def drawOpponentHits(app, canvas):
-    if app.turn.id == 1:
-        hits = app.player2.boardHits
-        for row in range(len(hits)):
-            for col in range(len(hits[0])):
-                if hits[row][col] > 0:
-                    drawCircle1(app, canvas, row, col, "black")
-    if app.turn.id == 2:
-        hits = app.player1.boardHits
-        for row in range(len(hits)):
-            for col in range(len(hits[0])):
-                if hits[row][col] > 0:
-                    drawCircle1(app, canvas, row, col, "black")
-
-
-#all general draws
+# methods that draw the board
 # -----------------------------------------------------------------------------------------------
 
-# draws board
+# draws board on the left
 def drawBoard1(app, canvas):
-    for row in range(app.rows):
-        for col in range(app.cols):
-            drawCell1(app, canvas, row, col, app.turn.board[row][col])
-                
+    if app.multiplayer == True:
+        for row in range(app.rows):
+            for col in range(app.cols):
+                drawCell1(app, canvas, row, col, app.turn.board[row][col])
+    elif app.practice == True:
+        for row in range(app.rows):
+            for col in range(app.cols):
+                drawCell1(app, canvas, row, col, app.player1.board[row][col])
+
+# draws board on the right           
 def drawBoard2(app, canvas): 
-    for row in range(app.rows):
-        for col in range(app.cols):
-            drawCell2(app, canvas, row, col, app.turn.board[row][col])
+    if app.multiplayer == True:
+        for row in range(app.rows):
+            for col in range(app.cols):
+                drawCell2(app, canvas, row, col, app.turn.board[row][col])
+    elif app.practice == True:
+        for row in range(app.rows):
+            for col in range(app.cols):
+                drawCell2(app, canvas, row, col, app.player1.board[row][col])
     
-# draws cell
+# draws cells for the left board
 def drawCell1(app, canvas, row, col, color):
     if app.setup == True:
         # canvas.create_rectangle(col*app.cellSize + app.width/2 - app.cellSize, 
@@ -823,7 +860,7 @@ def drawCell1(app, canvas, row, col, color):
                                 fill = color, 
                                 width = 2)
 
-        
+ # draws cells for the right board       
 def drawCell2(app, canvas, row, col, color):
     canvas.create_rectangle(col*app.cellSize + app.margin*2 + app.cols*app.cellSize, 
                             row*app.cellSize + app.margin*(5/2), 
@@ -831,7 +868,8 @@ def drawCell2(app, canvas, row, col, color):
                             (row + 1)*app.cellSize + app.margin*(5/2), 
                             fill = color, 
                             width = 2)
-    
+
+# draws circles for the left board
 def drawCircle1(app, canvas, row, col, color):
     canvas.create_oval(col*app.cellSize + app.margin + app.cellSize/4, 
                         row*app.cellSize + app.margin*(5/2) + app.cellSize/4,
@@ -839,7 +877,8 @@ def drawCircle1(app, canvas, row, col, color):
                         (row + 1)*app.cellSize + app.margin*(5/2) - app.cellSize/4, 
                         fill = color, 
                         width = 2)
-    
+
+# draws circles for the right board 
 def drawCircle2(app, canvas, row, col, color):
     canvas.create_oval(col*app.cellSize + app.margin*2 + app.cols*app.cellSize + app.cellSize/4, 
                         row*app.cellSize + app.margin*(5/2) + app.cellSize/4, 
@@ -847,11 +886,107 @@ def drawCircle2(app, canvas, row, col, color):
                         (row + 1)*app.cellSize + app.margin*(5/2) - app.cellSize/4, 
                         fill = color, 
                         width = 2)
-    
-# everything in setup
+
+# methods that draw the ships and hits
 # -----------------------------------------------------------------------------------------------
 
-# draws side bar of setup (shud put in app.setup)
+# draws all ships
+def drawShips(app, canvas):
+    print(f"current ships = {app.turn.ships}")
+    if app.multiplayer:
+        if app.setup == True:
+            for ship in app.turn.ships:
+                    coords = ship.getCoordinates()
+                    for coord in coords:
+                        row, col = coord
+                        drawCell1(app, canvas, row, col, "grey")
+            
+            # only for testing outline
+            for row in range(len(app.turn.boardShips)):
+                for col in range(len(app.turn.boardShips[0])):
+                    if app.turn.boardShips[row][col] == 0:
+                        drawCell1(app, canvas, row, col, "red")
+        
+        elif app.gameStarted == True:
+            for ship in app.turn.ships:
+                coords = ship.getCoordinates()
+                for coord in coords:
+                    row, col = coord
+                    drawCell1(app, canvas, row, col, "grey")
+
+    elif app.practice == True:
+        if app.setup == True:
+            for ship in app.player1.ships:
+                    coords = ship.getCoordinates()
+                    for coord in coords:
+                        row, col = coord
+                        drawCell1(app, canvas, row, col, "grey")
+            
+            # only for testing outline
+            for row in range(len(app.player1.boardShips)):
+                for col in range(len(app.player1.boardShips[0])):
+                    if app.player1.boardShips[row][col] == 0:
+                        drawCell1(app, canvas, row, col, "red")    
+        
+        elif app.gameStarted == True:
+            for ship in app.player1.ships:
+                coords = ship.getCoordinates()
+                for coord in coords:
+                    row, col = coord
+                    drawCell1(app, canvas, row, col, "grey")
+
+# draws the current players previous hits
+def drawsHits(app, canvas):
+    if app.multiplayer == True:
+        board = app.turn.boardHits
+        for row in range(len(board)):
+            for col in range(len(board[0])):
+                if board[row][col] == 1:
+                    drawCircle2(app, canvas, row, col, "light gray")
+                if board[row][col] == 2:
+                    drawCircle2(app, canvas, row, col, "red")
+                if board[row][col] == 3:
+                    drawCell2(app, canvas, row, col, "black")
+    
+    elif app.practice == True:
+        board = app.player1.boardHits
+        for row in range(len(board)):
+            for col in range(len(board[0])):
+                if board[row][col] == 1:
+                    drawCircle2(app, canvas, row, col, "light gray")
+                if board[row][col] == 2:
+                    drawCircle2(app, canvas, row, col, "red")
+                if board[row][col] == 3:
+                    drawCell2(app, canvas, row, col, "black")
+
+# draws where the opponent has hit the currentt player
+def drawOpponentHits(app, canvas):
+    if app.multiplayer == True:
+        if app.turn.id == 1:
+            hits = app.player2.boardHits
+            for row in range(len(hits)):
+                for col in range(len(hits[0])):
+                    if hits[row][col] > 0:
+                        drawCircle1(app, canvas, row, col, "black")
+        if app.turn.id == 2:
+            hits = app.player1.boardHits
+            for row in range(len(hits)):
+                for col in range(len(hits[0])):
+                    if hits[row][col] > 0:
+                        drawCircle1(app, canvas, row, col, "black")
+
+    elif app.practice == True:
+        hits = app.player2.boardHits
+        for row in range(len(hits)):
+            for col in range(len(hits[0])):
+                if hits[row][col] > 0:
+                    drawCircle1(app, canvas, row, col, "black")
+
+# text and titles
+# -----------------------------------------------------------------------------------------------
+
+# components in setup page
+# -------------------------------
 def sideBar(app, canvas):
     #create buttons for all Ships (say how many Ships there are)
     #when press button, will generate ship on board, 
@@ -891,16 +1026,44 @@ def sideBar(app, canvas):
                             font = "arial 18 bold",
                             fill = "black")
 
+# in multiple pages
+# -------------------------------    
 def generalTitles(app, canvas):
     canvas.create_text(app.width/2, 
-                        app.margin*(5/4), 
+                        app.height*(5/4), 
                         text = f"Player {app.turn.id}'s Turn",
                         font = "arial 30 bold", 
                         fill = "black")
+
+# in homepage
+# -------------------------------
+def homepage(app, canvas):
+    if app.homepage == True:
+        canvas.create_text(app.width/2, 
+                            app.height*(1/3), 
+                            text = "Battle Ship!",
+                            font = f"arial {app.rows*5} bold", 
+                            fill = "black")
+        
+        canvas.create_rectangle(app.width*(2/7),
+                                app.height*(1/4) + app.height*(1/6) + + app.height*(1/20),
+                                app.width*(5/7),
+                                app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/20),
+                                fill = "light gray",
+                                outline = "black")
+        
+        canvas.create_rectangle(app.width*(2/7),
+                                app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + app.height*(1/10),
+                                app.width*(5/7),
+                                app.height*(1/4) + app.height*(1/6) + app.height*(2/7) + app.height*(1/10),
+                                fill = "light gray",
+                                outline = "black")
     
 # -----------------------------------------------------------------------------------------------
 def redrawAll(app, canvas):
-    if app.setup == True:
+    if app.homepage == True:
+        homepage(app,canvas)
+    elif app.setup == True:
         generalTitles(app, canvas)
         drawBoard1(app,canvas)
         sideBar(app, canvas)
@@ -926,21 +1089,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# def appStopped(app): 
-
-# def keyPressed(app, event):     # use event.key
-
-# def keyReleased(app, event):
-
-
-
-# def mousePressed(app, event):   # use event.x and event.y
-
-# def mouseReleased(app, event): 
-
-
-# def mouseMoved(app, event):     # use event.x and event.y
-
-# def mouseDragged(app, event):
