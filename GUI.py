@@ -171,24 +171,6 @@ def addOtherOutlines(app):
             outline = getOutline(app, coords)
             addOutline(app, outline)
 
-    # if app.player == 0:
-    #     for ship in app.ships1:
-    #         if ship == app.selectedShip:
-    #             continue
-    #         else:
-    #             coords = ship.getCoordinates()
-    #             outline = getOutline(app, coords)
-    #             addOutline(app, outline)
-    # elif app.player == 1:
-    #     for ship in app.ships2:
-    #         if ship == app.selectedShip:
-    #             continue
-    #         else:
-    #             coords = ship.getCoordinates()
-    #             outline = getOutline(app, coords)
-    #             addOutline(app, outline)
-
-
 
 
 # have drawing function for ship class --> ship.draw
@@ -259,6 +241,7 @@ class player():
         self.rows = boardRows
         self.cols = boardCols
         self.id = id
+        self.destroyedShips = 0
 
         self.board = []
         for i in range(self.rows):
@@ -284,8 +267,10 @@ class player():
 
         self.allShips = allShips
         self.ships = []
+        self.allMoves = []
+        self.previousSuccess = []
     
-    def id(self):
+    def getId(self):
         return self.id
     def board(self):
         return self.board
@@ -295,6 +280,21 @@ class player():
         return self.boardHits
     def ships(self):
         return self.ships
+    def getMoves(self):
+        self.allMoves = []
+        for row in range(self.app.rows):
+            for col in range(self.app.cols):
+                if self.boardHits[row][col] == -1:
+                    self.allMoves.append((row, col))
+        
+        return self.allMoves
+    
+    def shipDestroyed(self):
+        self.destroyedShips += 1
+    def destroyedShips(self):
+        return self.destroyedShips
+    def getPreviousSuccess(self):
+        return self.previousSuccess
 
 # model and view functions
 # -----------------------------------------------------------------------------------------------
@@ -310,9 +310,9 @@ def getCell1(app, x, y):
     # aka "viewToModel"
     # return (row, col) in which (x, y) occurred or (-1, -1) if outside grid.
     if (not pointInGrid1(app, x, y)):
-        print("not in grid")
+        # print("not in grid")
         return (-1, -1)
-    print("ingrid")
+    # print("ingrid")
     gridWidth  = app.cols*app.cellSize
     gridHeight = app.rows*app.cellSize
     cellWidth  = app.cellSize
@@ -336,9 +336,9 @@ def getCell2(app, x, y):
     # aka "viewToModel"
     # return (row, col) in which (x, y) occurred or (-1, -1) if outside grid.
     if (not pointInGrid2(app, x, y)):
-        print("not in grid")
+        # print("not in grid")
         return (-1, -1)
-    print("ingrid")
+    # print("ingrid")
     gridWidth  = app.cols*app.cellSize
     gridHeight = app.rows*app.cellSize
     cellWidth  = app.cellSize
@@ -369,11 +369,11 @@ def getCellBounds2(app, row, col):
 # -----------------------------------------------------------------------------------------------
 
 def keyPressed(app, event):
-    print("keypressed")
+    # print("keypressed")
 
     if app.setup == True:
         ship = app.selectedShip
-        print(f"key pressed ship = {ship}")
+        # print(f"key pressed ship = {ship}")
         if ship != None:
             if event.key == "Up":
                 ship.moveShip(-1, 0)
@@ -390,21 +390,6 @@ def keyPressed(app, event):
 def mousePressed(app, event):   # use event.x and event.y
     print("mousepressed")
     # all mousePressed for homepage
-
-    # canvas.create_rectangle(app.width*(2/7),
-    #                             app.height*(1/4) + app.height*(1/6) + + app.height*(1/20),
-    #                             app.width*(5/7),
-    #                             app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/20),
-    #                             fill = "light gray",
-    #                             outline = "black")
-        
-    #     canvas.create_rectangle(app.width*(2/7),
-    #                             app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + app.height*(1/10),
-    #                             app.width*(5/7),
-    #                             app.height*(1/4) + app.height*(1/6) + app.height*(2/7) + app.height*(1/10),
-    #                             fill = "light gray",
-    #                             outline = "black")
-    
     if app.homepage == True:
         # multiplayer button
         if (event.x >= app.width*(2/7) and 
@@ -414,7 +399,7 @@ def mousePressed(app, event):   # use event.x and event.y
             app.multiplayer = True
             app.homepage = False
             app.setup = True
-
+            
         # practice button
         elif (event.x >= app.width*(2/7) and 
             event.x <= app.width*(5/7) and
@@ -422,7 +407,38 @@ def mousePressed(app, event):   # use event.x and event.y
             event.y <= app.height*(1/4) + app.height*(1/6) + app.height*(2/7) + app.height*(1/10)):
             app.practice = True
             app.homepage = False
-            app.setup = True
+            app.settings = True
+
+    # All mouse pressed for settings
+    elif app.settings == True:
+        # easy button
+        if (event.x >= app.width*(1/9) - app.width*(1/18) and 
+                event.x <= app.width*(3/9) - app.width*(1/18) and
+                event.y >= app.height*(1/4) + app.height*(1/6) + + app.height*(1/10) and
+                event.y <= app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/10)):
+                app.settings = False
+                app.difficulty = "easy"
+                app.setup = True
+                app.ai = randomA(app)
+
+        # medium button
+        if (event.x >= app.width*(4/9) - app.width*(1/18) and 
+                event.x <= app.width*(6/9) - app.width*(1/18) and
+                event.y >= app.height*(1/4) + app.height*(1/6) + + app.height*(1/10) and
+                event.y <= app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/10)):
+                app.settings = False
+                app.difficulty = "medium"
+                app.setup = True
+                app.ai = huntA(app)
+
+        # hard button
+        if (event.x >= app.width*(7/9) - app.width*(1/18) and 
+                event.x <= app.width*(9/9) - app.width*(1/18) and
+                event.y >= app.height*(1/4) + app.height*(1/6) + + app.height*(1/10) and
+                event.y <= app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/10)):
+                app.settings = False
+                app.difficulty = "hard"
+                app.setup = True
 
     # all mousePressed for setup page
     elif app.setup == True:
@@ -439,132 +455,549 @@ def mousePressed(app, event):   # use event.x and event.y
             event.y <= app.margin*(5/2) + app.rows*app.cellSize):
             
             # finish setup page for player 1
-            if app.turn.id == 1:
+            if app.turn.getId() == 1:
                 app.setup = True
                 app.gameStarted = False
                 app.turn = app.player2
             # finish setup page for player 2
-            elif app.turn.id == 2:
+            elif app.turn.getId() == 2:
                 app.selection = (-1, -1)
                 app.turn = app.player1
                 app.setup = False
                 app.gameStarted = True
-            print(f"final = {app.turn.id}")
 
     # all mousePressed for gameplay
     elif app.gameStarted == True:
-        print(app.player2.boardHits)
+
         if app.multiplayer == True:
             # checks if a box was selected in the grid and which box
             (row, col) = getCell2(app, event.x, event.y)
             if app.turn.boardHits[row][col] < 0:
                 app.selection = (row, col)
-                print(f"coords from select = {app.selection}")
-                print(f"mousepressed row col = {row, col}")
+                # print(f"coords from select = {app.selection}")
+                # print(f"mousepressed row col = {row, col}")
                 
+                makeHit(app, app.selection)
                 # checks if a ship was hit
-                if checkHit(app) == True:
+                if checkHit(app, app.selection) == True:
                     # checks if all ship parts bombed, if true calls completedShip
-                    shipAllBombed(app)
+                    shipAllBombed(app, app.selection)
                 
                 # if a move was made, the player will switch
                 elif app.selection != (-1, -1):
-                    if app.turn.id == 1:
+                    if app.turn.getId() == 1:
                         app.turn = app.player2
-                    elif app.turn.id == 2:
+                    elif app.turn.getId() == 2:
                         app.turn = app.player1
+        
         elif app.practice == True:
-            if app.turn.id == 1:
+            if app.turn.getId() == 1:
                 (row, col) = getCell2(app, event.x, event.y)
                 if app.turn.boardHits[row][col] < 0:
                     app.selection = (row, col)
-                    print(f"coords from select = {app.selection}")
-                    print(f"mousepressed row col = {row, col}")
+                    # print(f"coords from select = {app.selection}")
+                    # print(f"mousepressed row col = {row, col}")
                     
+                    makeHit(app, app.selection)
                     # checks if a ship was hit
-                    if checkHit(app) == True:
+                    if checkHit(app, app.selection) == True:
                         # checks if all ship parts bombed, if true calls completedShip
-                        shipAllBombed(app)
+                        shipAllBombed(app, app.selection)
                     
                     # if a move was made, the player will switch
                     elif app.selection != (-1, -1):
-                        if app.turn.id == 1:
+                        checkWin(app)
+
+                        if app.turn.getId() == 1:
+                            print("in pressed p1")
+                            print(f"turn = {app.turn.getId()}")
                             app.turn = app.player2
-                        elif app.turn.id == 2:
-                            app.turn = app.player1
+                            # runAI(app)
+                            app.ai.makeMove()
+                            if app.player2.getPreviousSuccess() != []:
+                                app.ai.makeMove()
+                            # app.turn = app.player1
+
+                        # elif app.turn.id == 2:
+                        #     app.turn = app.player1
+            if app.turn.getId() == 2:
+                app.ai.makeMove()
+
+                
+def runAI(app):
+    pass
+    # print(f"turn = {app.turn.id}")
+    # if app.practice == True:
+    #     print("--------")
+    #     print("AI started")
+    #     if app.turn.id == 2:
+    #         print("correct")
+    #         if app.difficulty == "easy":
+    #             randomAI(app)
+
+    #         elif app.difficulty == "medium":
+    #             print("correct2")
+    #             print(f"checkhit = {checkHit(app)}")
+    #             print(f"prev = {app.player2.previousSuccess}")
+    #             print("---------------")
+
+    #             if checkHit(app) == False and app.player2.previousSuccess == -1:
+    #                 print("going to RAND")
+    #                 print(f"checkhit rand = {checkHit(app)}")
+    #                 print(f"prev rand = {app.player2.previousSuccess}")
+    #                 # randomAI(app)
+    #                 checkWin(app)
+    #                 app.turn = app.player1
+
+    #             elif app.player2.previousSuccess != -1:
+    #                 print("going to HUNT")
+    #                 print(f"checkhit hunt = {checkHit(app)}")
+    #                 print(f"prev hunt = {app.player2.previousSuccess}")
+    #                 huntAI(app)
+    #                 checkWin(app)
+    #                 app.turn = app.player1
+
+    #         elif app.difficulty == "hard":
+    #             pass
+        
+    #     print(f"turn = {app.turn.id}")
+        
+# look at wordsearch
+# seperate two ais into diff classes --> AI = instace of AI
+# ai.make decision
+# /////////////////////////////////////////////////////////////////////////////////////
+# class huntA():
+#     def __init__(self, app):
+#         self.app = app
+#         self.directions = [(0,-1), (-1,0), (0,1), (1,0)]
+        
+#         # self.directions = [(-1, -1), (0, -1), (1, -1), 
+#         #                     (-1, 0), (1, 0), 
+#         #                     (-1, 1), (0, 1), (1, 1)]
+#         self.hit = None
+        
+#     def randomMove(self):
+#         while True:
+#             print("---")
+#             print("in rand move")
+#             print(f"turn = {self.app.turn.getId()}")
+#             randRow = random.randint(0, self.app.rows-1)
+#             randCol = random.randint(0, self.app.cols-1)
+
+#             print(f"random coord = {randRow, randCol}")
+            
+#             self.hit = (randRow, randCol)
+
+#             possibleMoves = self.app.player2.getMoves()
+
+#             if (randRow, randCol) in possibleMoves:
+#                 makeHit(self.app, self.hit)
+#                 if checkHit(self.app, self.hit) == False:
+#                     print(f"unsuccess hit rand = {self.hit}")
+#                     self.app.player2.previousSuccess = []
+#                     self.app.turn = self.app.player1
+#                     break
+
+#                 elif checkHit(self.app, self.hit) == True:
+#                     print(f"success hit rand = {self.hit}")
+#                     self.app.player2.previousSuccess.append(self.hit)
+
+#                 if shipAllBombed(self.app, self.hit) == True:
+#                     print("__all bombed__1")
+#                     self.app.player2.previousSuccess = []
+        
+#             if self.app.player2.getPreviousSuccess() != []:
+#                 break
+    
+#     def huntMove(self):
+#         while True:
+#             print("---")
+#             print("in hunt move")
+#             print(f"turn = {self.app.turn.getId()}")
+#             print(self.app.player2.getPreviousSuccess())
+            
+#             prevSuccesses = self.app.player2.getPreviousSuccess()
+#             hitMade = False
+#             print(f"prev successes = {prevSuccesses}")
+#             while hitMade == False:
+#                 for prevSucc in prevSuccesses:
+#                 # while self.app.player2.getPreviousSuccess() != []: #or should i do for loop going though all of prevSucc and pop each elem that doesnt work?
+#                     # prevSucc = self.app.player2.getPreviousSuccess()
+#                     print(f"prevSucc = {prevSucc}")
+#                     row, col = prevSucc
+                    
+#                     counter = 0
+#                     for d in self.directions:
+#                         counter += 1
+#                         print(f"direction = {d}")
+#                         drow, dcol = d
+#                         newRow = row + drow
+#                         newCol = col + dcol
+
+#                         newHit = (newRow, newCol)
+
+#                         possibleMoves = self.app.player2.getMoves()
+#                         if newHit in possibleMoves:
+#                             print("hit possible")
+#                             self.hit = newHit
+#                             makeHit(self.app, self.hit)
+#                             break
+#                             print("continue?")
+
+#                         if counter == 4:
+#                             print("popped")
+#                             self.app.player2.previousSuccess.pop(0)
+#                     print("still in loop")
+#                     hitMade = True
+
+#             if checkHit(self.app, self.hit) == False:
+#                     print(f"unsuccess hit hunt = {self.hit}")
+#                     # self.app.player2.previousSuccess = -1
+#                     self.app.turn = self.app.player1
+#                     break
+
+#             elif checkHit(self.app, self.hit) == True:
+#                 print(f"success hit hunt = {self.hit}")
+#                 self.app.player2.previousSuccess.append(self.hit)
+
+#                 if shipAllBombed(self.app, prevSuccesses[0]) == True:
+#                     print("__all bombed__2")
+#                     self.app.player2.previousSuccess = []
+
+#             if self.app.player2.getPreviousSuccess() != []:
+#                 print("enter ???")
+#                 break
+
+#     def makeMove(self):
+#         if self.app.turn.getId() == 2:
+#             print(f"make move player = {self.app.turn.getId()}")
+#             if self.app.player2.getPreviousSuccess() == []:
+#                 print("gg in rand move")
+#                 self.randomMove()
+#             else:
+#                 print("gg in hunt move")
+#                 print(f"prev succ = {self.app.player2.getPreviousSuccess()}")
+#                 self.huntMove()
+# /////////////////////////////////////////////////////////////////////////////////////
+class huntA():
+    def __init__(self, app):
+        self.app = app
+        self.directions = [(0,-1), (-1,0), (0,1), (1,0)]
+        self.hit = None
+        
+    def possibleMove(self, row, col):
+        possibleMoves = self.app.player2.getMoves()
+        if (row, col) in possibleMoves:
+            return True
+        
+    def makeMove(self):
+        while self.app.turn.getId() == 2:
+            # print(f"make move player = {self.app.turn.getId()}")
+            print("------------------------------------------finish function")
+            if self.app.player2.getPreviousSuccess() == []:
+                print("gg in rand move")
+                print(f"prev succ = {self.app.player2.getPreviousSuccess()}")
+                self.randomMove()
+            else:
+                print("gg in hunt move")
+                print(f"prev succ = {self.app.player2.getPreviousSuccess()}")
+                self.huntMove()
+        print("while loop exited")
+        
+    def huntMove(self):
+        print("------------------------------------------")
+        print("in hunt")
+        print("---")
+        prevSuccesses = self.app.player2.getPreviousSuccess()
+        mostRecentSucc = prevSuccesses[-1]
+
+        counter = 0
+        for d in self.directions:
+            drow, dcol = d
+            row, col = mostRecentSucc
+            newRow, newCol = row + drow, col + dcol
+
+            if self.possibleMove(newRow, newCol) == False:
+                counter += 1
+                if counter == 4:
+                    prevSuccesses.pop(-1)
+                    print("popped")
+
+            elif self.possibleMove(newRow, newCol) == True:
+                print(f"HUNT: possible move is true = {newRow, newCol}")
+                self.hit = (newRow, newCol)
+                makeHit(self.app, self.hit)
+
+                if checkHit(self.app, self.hit) == False:
+                    print(f"unsuccess hit rand = {self.hit}")
+                    # self.app.player2.previousSuccess = []
+                    self.app.turn = self.app.player1
+                    print("HUNT: prev succ cleared - checkHit")
+                    print(self.app.turn.getId())
+                    break
+
+                elif checkHit(self.app, self.hit) == True:
+                    self.app.player2.previousSuccess.append(self.hit)
+
+                if shipAllBombed(self.app, self.hit) == True:
+                    print("__all bombed__1")
+                    self.app.player2.previousSuccess = []
+                    print("HUNT: prev succ cleared - allbombed")
+                
+    def randomMove(self):
+            print("------------------------------------------")
+            print("in rand")
+        # while True:
+            print("---")
+            print(f"turn = {self.app.turn.getId()}")
+            randRow = random.randint(0, self.app.rows-1)
+            randCol = random.randint(0, self.app.cols-1)
+
+            print(f"random coord = {randRow, randCol}")
+            
+            self.hit = (randRow, randCol)
+
+            if self.possibleMove(randRow, randCol) == True:
+                print(f"RAND: possible move is true = {randRow, randCol}")
+                makeHit(self.app, self.hit)
+
+                if checkHit(self.app, self.hit) == False:
+                    print(f"unsuccess hit rand = {self.hit}")
+                    # self.app.player2.previousSuccess = []
+                    self.app.turn = self.app.player1
+                    print("RAND: prev succ cleared - checkHit")
+                    # break
+
+                elif checkHit(self.app, self.hit) == True:
+                    print(f"success hit rand = {self.hit}")
+                    self.app.player2.previousSuccess.append(self.hit)
+
+                elif shipAllBombed(self.app, self.hit) == True:
+                    print("__all bombed__1")
+                    self.app.player2.previousSuccess = []
+                    print("RAND: prev succ cleared - allbombed")
+        
+            # if self.app.player2.getPreviousSuccess() != []:
+            #     break
 
 
+
+def huntAI(app):
+    pass
+#     print("entered HUNT")
+#     while True:
+#         directions = [(-1, -1), (0, -1), (1, -1), 
+#                         (-1, 0), (1, 0), 
+#                         (-1, 1), (0, 1), (1, 1)]
+#         possibleMoves = app.player2.getMoves()
+#         print(possibleMoves)
+#         # if checkHit(app) == False:
+#         #     randomAI(app)
+
+#         if checkHit(app) == True:
+            
+#             (row, col) = app.player2.previousSuccess()
+#             for d in directions:
+#                 drow = d[0]
+#                 dcol = d[1]
+#                 newRow = row + drow
+#                 newCol = col + dcol
+#                 if (newRow, newCol) in possibleMoves:
+#                     print("move made")
+#                     makeHit(app)
+#                     if checkHit(app) == True:
+#                         shipAllBombed(app)
+#                         break
+
+#         if shipAllBombed(app) == True:
+#             app.player2.previousSuccess = -1
+#         # checkWin(app)
+#         # app.turn = app.player1
+#         break
+
+class randomA():
+    def __init__(self, app):
+        self.app = app
+    def makeMove(self):
+        while True:
+            randRow = random.randint(0, self.app.rows-1)
+            randCol = random.randint(0, self.app.cols-1)
+
+            print(f"random coord = {randRow, randCol}")
+            
+            hit = (randRow, randCol)
+
+            possibleMoves = self.app.player2.getMoves()
+
+            if (randRow, randCol) in possibleMoves:
+                makeHit(self.app, hit)
+                if checkHit(self.app, hit) == False:
+                    print("unsuccess hit")
+                    self.app.player2.previousSuccess = []
+                    self.app.turn = self.app.player1
+
+                elif checkHit(self.app, hit) == True:
+                    print("success hit")
+                    self.app.player2.previousSuccess.append(hit)
+
+                if shipAllBombed(self.app, hit) == True:
+                    print("__all bombed__")
+                    self.app.player2.previousSuccess = []
+            break
+
+
+def randomAI(app):
+    pass
+#     print("entered RAND")
+#     while True:
+#         # randomizes a row and col for the hit
+#         randRow = random.randint(0, app.rows-1)
+#         randCol = random.randint(0, app.cols-1)
+#         # saves possible moves
+
+#         possibleMoves = app.player2.getMoves()
+
+#         # checks if the row and col are valid moves (have not been selected before)
+#         if (randRow, randCol) in possibleMoves:
+#             # print("move made")
+#             # app.selection = (randRow, randCol)
+#             makeHit(app)
+#             # checks if the randomized move hit a ship
+#             if checkHit(app) == False:
+#                 print("unsuccess hit")
+#                 app.player2.previousSuccess = -1
+#             elif checkHit(app) == True:
+#                 print("success hit")
+#                 # keeps track of the previous successful hit if the whole ship is not bombed
+#                 app.player2.previousSuccess = app.selection
+#                 # checks if all ship parts bombed, if true calls completedShip
+#                 if shipAllBombed(app) == True:
+#                     print("__all bombed__")
+#                     app.player2.previousSuccess = -1
+
+#         # swaps players
+#         # checkWin(app)
+#         # app.turn = app.player1
+#         break
+            
 # checks which ship was selected (setup page)
 def checkWhichShip(app):
     # playerShips = None
     playerShips = app.turn.ships
     for ship in playerShips:
-        print("newSHIP")
+        # print("newSHIP")
         coords = ship.getCoordinates()
-        print(f"ship coords{coords}, slected = {app.selection}")
+        # print(f"ship coords{coords}, slected = {app.selection}")
         if app.selection in coords:
             app.selectedShip = ship
             break
     return None
         
 # checks if a ship was hit and for which player (gameplay)
-def checkHit(app):
-    print("check Hit")
-    print(f"app.sele = {app.selection}")
+def checkHit(app, hit):
+    # print("check Hit")
+    # print(f"app.sele = {app.selection}")
     if app.gameStarted == True:
-        if app.selection != (-1, -1):
-            row, col = app.selection
-            if app.turn.id == 1:
+        if hit != (-1, -1):
+            row, col = hit
+            if app.turn.getId() == 1:
                 # checks if ship was hit
+                print(f"player 1 hit = {app.player2.boardShips[row][col]}")
                 if app.player2.boardShips[row][col] > 0:
-                    app.turn.boardHits[row][col] = 2
                     return True
                 # if ship wasn't hit
                 else:
-                    app.turn.boardHits[row][col] = 1
                     return False
-            if app.turn.id == 2:
+            if app.turn.getId() == 2:
+                print(f"player 2 hit = {app.player1.boardShips[row][col]}")
                 if app.player1.boardShips[row][col] > 0:
-                    app.turn.boardHits[row][col] = 2
                     return True
                 else:
-                    app.turn.boardHits[row][col] = 1
                     return False
+                
+def makeHit(app, hit):
+    print("##########")
+    if app.gameStarted == True:
+        if hit != (-1, -1):
+            row, col = hit
+            if app.turn.getId() == 1:
+                print("making hit for 1")
+                # checks if ship was hit
+                if app.player2.boardShips[row][col] > 0:
+                    app.turn.boardHits[row][col] = 2
+                # if ship wasn't hit
+                else:
+                    app.turn.boardHits[row][col] = 1
+            if app.turn.getId() == 2:
+                print("making hit for 2")
+                if app.player1.boardShips[row][col] > 0:
+                    app.turn.boardHits[row][col] = 2
+                else:
+                    app.turn.boardHits[row][col] = 1
 
 # checks if all parts of ship are bombed (gameplay)
-def shipAllBombed(app):
-    if app.turn.id == 1:
+def shipAllBombed(app, hit):
+    if app.turn.getId() == 1:
         playerShips = app.player2.ships
         # checks if hit hit any of the opponents ships
         for ship in playerShips:
             coords = ship.getCoordinates()
-            if app.selection in coords:
+            if hit in coords:
                 # checks if all coords of the opponents ship has been hit
                 for i in coords:
                     row, col = i
                     if app.turn.boardHits[row][col] != 2:
                         return False
                 completedShip(app, coords)
+                app.player2.shipDestroyed()
+                print(app.player2.destroyedShips)
                 return True
-    if app.turn.id == 2:
+            
+    if app.turn.getId() == 2:
+        # print("inside shipAllBombed2")
         playerShips = app.player1.ships
-        # checks if hit hit any of the opponents ships
+        # checks which ship was hit
         for ship in playerShips:
+            # gets coords of ship
             coords = ship.getCoordinates()
-            if app.selection in coords:
+            if hit in coords:
                 # checks if all coords of the opponents ship has been hit
                 for i in coords:
                     row, col = i
+                    print(f"checking current coord = {i} = {app.turn.boardHits[row][col]}")
                     if app.turn.boardHits[row][col] != 2:
+                        print("not all bombed")
                         return False
                 completedShip(app, coords)
+                print("is all bombed")
+                app.player1.shipDestroyed()
+                print(app.player1.destroyedShips)
                 return True
+            else:
+                print("error")
 
 # turns coords of ship to fully hit ship (gameplay)
 def completedShip(app, coords):
     for i in coords:
         row, col = i
-        app.turn.boardHits[row][col] = 3    
+        app.turn.boardHits[row][col] = 3  
+    if app.practice == True and app.turn.getId() == 2 and app.difficulty == "medium":
+        outline = getOutline(app, coords)
+        for i in outline:
+            rowO, colO = i
+            app.player2.boardHits[rowO][colO] == 0
+
+def checkWin(app):
+    # print(f"totShips = {app.totalShips}")
+    # print(f"all ships destroyed {app.player2.destroyedShips}")
+    if app.totalShips == app.player1.destroyedShips:
+        app.winner = app.player2.getId()
+        app.gameOver = True
+    elif app.totalShips == app.player2.destroyedShips:
+        # print("go in")
+        app.winner = app.player1.getId()
+        app.gameOver = True
+    # print(f"game over = {app.gameOver}")  
 
 #gui and graphics
 # -----------------------------------------------------------------------------------------------
@@ -581,8 +1014,15 @@ def appStarted(app):            # initialize the model (app.xyz)
     app.homepage = True
     app.multiplayer = False
     app.practice = False
+    app.settings = False
     app.setup = False
     app.gameStarted = False
+    app.ai = None
+
+    app.difficulty = None
+
+    app.winner = None
+    app.gameOver = False
     (app.rows, app.cols, app.cellSize, app.margin) = gameDimensions()
     
     app.emptyColor = "light blue"
@@ -620,6 +1060,10 @@ def appStarted(app):            # initialize the model (app.xyz)
 
     #user can change this (make adjustable)  
     app.allShips = {1:1, 2:2, 3:3, 4:1, 5:2, 6:2, 7:1}
+    
+    app.totalShips = 0
+    for key in app.allShips:
+        app.totalShips += app.allShips[key]
 
     app.player1 = player(app, 1, app.rows, app.cols, app.emptyColor, app.allShips)
     app.player2 = player(app, 2, app.rows, app.cols, app.emptyColor, app.allShips)
@@ -629,8 +1073,8 @@ def appStarted(app):            # initialize the model (app.xyz)
     initialShips(app, 2)
     app.turn = app.player1
 
-    print(f"player1 ships{app.player1.ships}")
-    print(f"player2 ships{app.player2.ships}")
+    # print(f"player1 ships{app.player1.ships}")
+    # print(f"player2 ships{app.player2.ships}")
 
 # creates all ships on the player's board depending on the player (both players will have different randomized boards)
 def initialShips(app, player):
@@ -764,10 +1208,10 @@ def getOutline(app, shipCoord):
                     or newRow == -1 or newCol == -1 ):
                 continue
             # satisfy all constraints, appends coord of outline
-            elif app.turn.id == 1:
+            elif app.turn.getId() == 1:
                 if app.player1.boardShips[newRow][newCol] < 0 and (newRow, newCol) not in outline:
                     outline.append((newRow, newCol)) 
-            elif app.turn.id == 2:
+            elif app.turn.getId() == 2:
                 if app.player2.boardShips[newRow][newCol] < 0 and (newRow, newCol) not in outline:
                     outline.append((newRow, newCol)) 
     return outline
@@ -859,6 +1303,11 @@ def drawCell1(app, canvas, row, col, color):
                                 (row + 1)*app.cellSize + app.margin*(5/2), 
                                 fill = color, 
                                 width = 2)
+        canvas.create_text(col*app.cellSize + app.margin + 15, 
+                            row*app.cellSize + app.margin*(5/2) + 20,
+                            text = f"{row,col}",
+                            font = "arial 10",
+                            fill = "black")
 
  # draws cells for the right board       
 def drawCell2(app, canvas, row, col, color):
@@ -892,7 +1341,7 @@ def drawCircle2(app, canvas, row, col, color):
 
 # draws all ships
 def drawShips(app, canvas):
-    print(f"current ships = {app.turn.ships}")
+    # print(f"current ships = {app.turn.ships}")
     if app.multiplayer:
         if app.setup == True:
             for ship in app.turn.ships:
@@ -901,11 +1350,11 @@ def drawShips(app, canvas):
                         row, col = coord
                         drawCell1(app, canvas, row, col, "grey")
             
-            # only for testing outline
-            for row in range(len(app.turn.boardShips)):
-                for col in range(len(app.turn.boardShips[0])):
-                    if app.turn.boardShips[row][col] == 0:
-                        drawCell1(app, canvas, row, col, "red")
+            # # only for testing outline
+            # for row in range(len(app.turn.boardShips)):
+            #     for col in range(len(app.turn.boardShips[0])):
+            #         if app.turn.boardShips[row][col] == 0:
+            #             drawCell1(app, canvas, row, col, "red")
         
         elif app.gameStarted == True:
             for ship in app.turn.ships:
@@ -962,13 +1411,13 @@ def drawsHits(app, canvas):
 # draws where the opponent has hit the currentt player
 def drawOpponentHits(app, canvas):
     if app.multiplayer == True:
-        if app.turn.id == 1:
+        if app.turn.getId() == 1:
             hits = app.player2.boardHits
             for row in range(len(hits)):
                 for col in range(len(hits[0])):
                     if hits[row][col] > 0:
                         drawCircle1(app, canvas, row, col, "black")
-        if app.turn.id == 2:
+        if app.turn.getId() == 2:
             hits = app.player1.boardHits
             for row in range(len(hits)):
                 for col in range(len(hits[0])):
@@ -1031,7 +1480,7 @@ def sideBar(app, canvas):
 def generalTitles(app, canvas):
     canvas.create_text(app.width/2, 
                         app.height*(5/4), 
-                        text = f"Player {app.turn.id}'s Turn",
+                        text = f"Player {app.turn.getId()}'s Turn",
                         font = "arial 30 bold", 
                         fill = "black")
 
@@ -1058,23 +1507,99 @@ def homepage(app, canvas):
                                 app.height*(1/4) + app.height*(1/6) + app.height*(2/7) + app.height*(1/10),
                                 fill = "light gray",
                                 outline = "black")
+        
+        canvas.create_text(app.width*(2/7) + app.width*(3/14),
+                            app.height*(1/4) + app.height*(1/6) + + app.height*(1/20) + app.height*(1/14),
+                            text = "Multiplayer",
+                            font = "arial 25 bold")
+        canvas.create_text(app.width*(2/7) + app.width*(3/14),
+                            app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + app.height*(1/10) + app.height*(1/14),
+                            text = "Practice",
+                            font = "arial 25 bold")
+
+def settings(app, canvas):
+    canvas.create_text(app.width/2, 
+                        app.height*(1/3), 
+                        text = "Settings!",
+                        font = f"arial {app.rows*4} bold", 
+                        fill = "black")
+    canvas.create_text(app.width/2, 
+                        app.height*(1/3) + app.height*(1/10), 
+                        text = "Difficulty",
+                        font = f"arial 25 bold", 
+                        fill = "black")
+    # easy button
+    canvas.create_rectangle(app.width*(1/9) - app.width*(1/18),
+                            app.height*(1/4) + app.height*(1/6) + + app.height*(1/10),
+                            app.width*(3/9) - app.width*(1/18),
+                            app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/10),
+                            fill = "light green",
+                            outline = "black")
+    canvas.create_text(app.width*(1/9) - app.width*(1/18) + app.width*(2/18),
+                        app.height*(1/4) + app.height*(1/6) + + app.height*(1/10) + app.height*(1/14),
+                        text = "Easy",
+                        font = f"arial 25 bold", 
+                        fill = "black")
+    # medium button
+    canvas.create_rectangle(app.width*(4/9) - app.width*(1/18),
+                            app.height*(1/4) + app.height*(1/6) + + app.height*(1/10),
+                            app.width*(6/9) - app.width*(1/18),
+                            app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/10),
+                            fill = "yellow",
+                            outline = "black")
+    canvas.create_text(app.width*(4/9) - app.width*(1/18) + app.width*(2/18),
+                        app.height*(1/4) + app.height*(1/6) + + app.height*(1/10) + app.height*(1/14),
+                        text = "Medium",
+                        font = f"arial 25 bold", 
+                        fill = "black")
+    # hard button
+    canvas.create_rectangle(app.width*(7/9) - app.width*(1/18),
+                            app.height*(1/4) + app.height*(1/6) + + app.height*(1/10),
+                            app.width*(9/9) - app.width*(1/18),
+                            app.height*(1/4) + app.height*(1/6) + app.height*(1/7) + + app.height*(1/10),
+                            fill = "red",
+                            outline = "black")
+    canvas.create_text(app.width*(7/9) - app.width*(1/18) + app.width*(2/18),
+                        app.height*(1/4) + app.height*(1/6) + + app.height*(1/10) + app.height*(1/14),
+                        text = "Hard",
+                        font = f"arial 25 bold", 
+                        fill = "black")
     
 # -----------------------------------------------------------------------------------------------
 def redrawAll(app, canvas):
     if app.homepage == True:
-        homepage(app,canvas)
+        homepage(app, canvas)
+    elif app.settings == True:
+        settings(app, canvas)
     elif app.setup == True:
-        generalTitles(app, canvas)
-        drawBoard1(app,canvas)
+        if app.multiplayer == True:
+            generalTitles(app, canvas)
+        drawBoard1(app, canvas)
         sideBar(app, canvas)
         drawShips(app, canvas)
     elif app.gameStarted == True:
-        generalTitles(app, canvas)
+        if app.multiplayer == True:
+            generalTitles(app, canvas)
         drawBoard1(app,canvas)
         drawBoard2(app, canvas)
         drawShips(app, canvas)
         drawsHits(app, canvas)
         drawOpponentHits(app, canvas)
+
+    if app.gameOver == True:
+        canvas.create_rectangle(app.width/2 - app.width/4,
+                                app.height/2 - app.height/4, 
+                                app.width/2 + app.width/4,
+                                app.height/2 + app.height/4, 
+                                fill="tan")
+        canvas.create_text(app.height/2 - app.height/8, 
+                            app.width/2, 
+                            text = "Game Over",
+                            font = "arial 35 bold")
+        canvas.create_text(app.height/2 + app.height/20, 
+                            app.width/2, 
+                            text = f"Player {app.winner} Wins!",
+                            font = "arial 35 bold")
 
 
 def playBattleship():
